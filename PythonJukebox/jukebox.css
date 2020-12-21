@@ -8,6 +8,40 @@
 }
 
 
+
+#volSlider {
+  border-width: 3px;
+  border-style: solid;
+  border-radius: 10px;
+  border-color: transparent;
+  background-color:black;
+}
+
+value {
+    background-color:teal;
+    color: black;
+    font-size: 30px;
+    font-weight: bold;
+}
+
+slider {
+    background-size: 100px 10px;
+    color: teal;
+    background-color:teal;
+    min-width: 50px; 
+    border: 10px solid;
+}
+
+
+trough {
+    color: teal;
+    border-color: teal;
+    border: 5px solid;
+    min-width: 10px;
+} 
+
+
+
 #btnSkip {
     font-size: 36px;
     font-weight: bold;
