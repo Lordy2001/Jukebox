@@ -18,7 +18,7 @@ from gi.repository import GLib, Gst, GObject, Gtk
 
 MUSIC_ROOT  = "/media/pi/MUSIC/"
 COMM_PORT = '/dev/ttyUSB0'
-
+SLEEP_MINUTES = 15
 
 class JukeboxMainWindow(Gtk.Window):
     def __init__(self):
@@ -31,6 +31,7 @@ class JukeboxMainWindow(Gtk.Window):
         # self.gobject.signal_new('CMD_RCV', self.window, gobject.SIGNAL_RUN_FIRST,None, (str))
         # self.window.connect('CMD_RCV',self.onCmd)
 
+        #Set up Gstreamer
         self.songQueue = []
         self.playstate = False
 
@@ -45,10 +46,15 @@ class JukeboxMainWindow(Gtk.Window):
         bus.connect("message", self.on_message)
         self.setVol(50)
 
+        #Hack to turn mouse cursor to a dot
         self.window.connect("realize", self.realize_cb)
 
-        self.sleepMode = True;
+        #Set up sleep mode bool and sleep timer
+        self.sleepTimer = 0
+        self.sleepMode = True
 
+
+        #Open Serial port
         try:
             self.serial = serial.Serial(COMM_PORT, timeout = 1)
         except expression as identifier:
@@ -57,18 +63,19 @@ class JukeboxMainWindow(Gtk.Window):
         if(not self.serial.is_open):
             Gtk.main_quit()
 
+        #Set up Serial command listener to listen for song selections from keypad
         self.alive = threading.Event()
-
         self.cmdListenerThread = threading.Thread(target = self.ComPortThread)
         self.cmdListenerThread.setDaemon(1)
         self.alive.set()
         self.cmdListenerThread.start()
 
+        # Set up 1 minute timer to spin the album covers each minute
         self.sIdMinuteTimer = GLib.timeout_add_seconds(60, self.onMinuteTick)
-
         self.coverSpinThread = threading.Thread(target = self.spinCoverThread)
         self.coverSpinThread.setDaemon(1)
 
+        #Final prep and show the window
         self.updateDisp("  ")
         self.sleep(False)
         self.spinCover()
@@ -126,11 +133,12 @@ class JukeboxMainWindow(Gtk.Window):
             err, debug = message.parse_error()
             print ("Error: %s" % err, debug)
 
-    def onCmd(self, *args):
-        print(args)
-
     def onMinuteTick(self):
         self.spinCover()
+        if(not self.sleepMode):
+            self.sleepTimer +=1
+        if(self.sleepTimer >  SLEEP_MINUTES):
+            self.sleep(True)
 
     def realize_cb(self, widget):
         pixmap = gtk.gdk.Pixmap(None, 1, 1, 1)
@@ -168,6 +176,7 @@ class JukeboxMainWindow(Gtk.Window):
         self.player.set_state(Gst.State.PLAYING)
         self.playstate = True
         self.updateDisp(song)
+        self.sleepTimer = 0
 
     def setVol(self, newVol):
         newVol = newVol/100

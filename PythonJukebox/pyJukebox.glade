@@ -227,8 +227,9 @@
         </child>
         <child>
           <object class="GtkButton" id="btnClos">
-            <property name="width-request">24</property>
-            <property name="height-request">40</property>
+            <property name="label" translatable="yes">Close</property>
+            <property name="width-request">62</property>
+            <property name="height-request">34</property>
             <property name="visible">True</property>
             <property name="can-focus">True</property>
             <property name="receives-default">True</property>
@@ -236,8 +237,7 @@
             <signal name="clicked" handler="onCloseBtn" swapped="no"/>
           </object>
           <packing>
-            <property name="x">2</property>
-            <property name="y">440</property>
+            <property name="x">688</property>
           </packing>
         </child>
       </object>
