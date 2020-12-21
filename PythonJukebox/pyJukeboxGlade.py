@@ -149,11 +149,11 @@ class JukeboxMainWindow(Gtk.Window):
             print ("Error: %s" % err, debug)
 
     def onMinuteTick(self):
-        if(not self.sleepMode):
-            self.sleepTimer += 1
-            print("Sleep Timer:%r"%self.sleepTimer)
-            if(self.sleepTimer >=  SLEEP_MINUTES):
-                self.sleep(True)
+        # if(not self.sleepMode):
+        #     self.sleepTimer += 1
+        #     print("Sleep Timer:%r"%self.sleepTimer)
+        #     if(self.sleepTimer >=  SLEEP_MINUTES):
+        #         self.sleep(True)
 
         self.coverSpinTimer += 1
         if(self.coverSpinTimer >= COVERSPIN_MINUTES):
