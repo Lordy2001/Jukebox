@@ -14,22 +14,30 @@ import time
 import gi
 gi.require_version('Gst', '1.0')
 gi.require_version('Gtk','3.0')
-from gi.repository import GLib, Gst, GObject, Gtk
+from gi.repository import GLib, Gst, GObject, Gtk, Gio
+
+GLADE_CSS   = "/home/pi/PythonJukebox/jukebox.css"
 
 MUSIC_ROOT  = "/media/pi/MUSIC/"
 COMM_PORT = '/dev/ttyUSB0'
 SLEEP_MINUTES = 15
+COVERSPIN_MINUTES = 5
 
 class JukeboxMainWindow(Gtk.Window):
     def __init__(self):
+
+        #Build the window
         self.builder = Gtk.Builder()
         self.builder.add_from_file("pyJukebox.glade")
         self.builder.connect_signals(self)
         self.builder.get_object("volSlider").set_inverted(True)
         self.window = self.builder.get_object("jukeboxWindow")
 
-        # self.gobject.signal_new('CMD_RCV', self.window, gobject.SIGNAL_RUN_FIRST,None, (str))
-        # self.window.connect('CMD_RCV',self.onCmd)
+        #Apply CSS
+        #cssFile = Gio.
+        provider = Gtk.CssProvider()
+        provider.load_from_path(GLADE_CSS)
+        self.apply_css(self.window, provider)
 
         #Set up Gstreamer
         self.songQueue = []
@@ -52,7 +60,7 @@ class JukeboxMainWindow(Gtk.Window):
         #Set up sleep mode bool and sleep timer
         self.sleepTimer = 0
         self.sleepMode = True
-
+        self.coverSpinTimer = 0
 
         #Open Serial port
         try:
@@ -72,14 +80,21 @@ class JukeboxMainWindow(Gtk.Window):
 
         # Set up 1 minute timer to spin the album covers each minute
         self.sIdMinuteTimer = GLib.timeout_add_seconds(60, self.onMinuteTick)
-        self.coverSpinThread = threading.Thread(target = self.spinCoverThread)
-        self.coverSpinThread.setDaemon(1)
 
         #Final prep and show the window
         self.updateDisp("  ")
         self.sleep(False)
         self.spinCover()
         self.window.show()
+
+
+    def apply_css(self, widget, provider):
+        Gtk.StyleContext.add_provider(widget.get_style_context(),
+                                      provider,
+                                      Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+
+        if isinstance(widget, Gtk.Container):
+            widget.forall(self.apply_css, provider)
 
 
     def onDestroy(self, *args):
@@ -134,17 +149,24 @@ class JukeboxMainWindow(Gtk.Window):
             print ("Error: %s" % err, debug)
 
     def onMinuteTick(self):
-        self.spinCover()
         if(not self.sleepMode):
-            self.sleepTimer +=1
-        if(self.sleepTimer >  SLEEP_MINUTES):
-            self.sleep(True)
+            self.sleepTimer += 1
+            print("Sleep Timer:%r"%self.sleepTimer)
+            if(self.sleepTimer >=  SLEEP_MINUTES):
+                self.sleep(True)
+
+        self.coverSpinTimer += 1
+        if(self.coverSpinTimer >= COVERSPIN_MINUTES):
+            self.coverSpinTimer = 0
+            self.spinCover()
+        return True     #Do this again in a minute
 
     def realize_cb(self, widget):
-        pixmap = gtk.gdk.Pixmap(None, 1, 1, 1)
-        color = gtk.gdk.Color()
-        cursor = gtk.gdk.Cursor(pixmap, pixmap, color, color, 0, 0)
-        widget.window.set_cursor(cursor)
+        pass
+        # pixmap = Gtk.Gdk.Pixmap(None, 1, 1, 1)
+        # color = Gtk.Gdk.Color()
+        # cursor = Gtk.Gdk.Cursor(pixmap, pixmap, color, color, 0, 0)
+        # widget.window.set_cursor(cursor)
         
     def ComPortThread(self):
         while self.alive.isSet():
@@ -166,6 +188,8 @@ class JukeboxMainWindow(Gtk.Window):
 
     def spinCover(self):
         if(not self.sleepMode):
+            self.coverSpinThread = threading.Thread(target = self.spinCoverThread)
+            self.coverSpinThread.setDaemon(1)
             self.coverSpinThread.start()
 
     def start(self, song,sfile,title,artist):
@@ -228,8 +252,13 @@ class JukeboxMainWindow(Gtk.Window):
     def sleep(self, sleep):
         if(sleep != self.sleepMode):
             if(sleep):
+                print("Goodnight")
                 self.sleepMode = True;
                 self.sendCmd(b'#Z0\n')
+                self.songQueue.clear()
+                self.updatePlaylist()
+                self.player.set_state(Gst.State.NULL)
+                self.getNext()
             else:
                 self.sleepMode = False;
                 self.sendCmd(b'#Z1\n')

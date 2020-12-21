@@ -1,0 +1,24 @@
+
+
+* {
+    color: teal;
+    background-color: black;
+    border-style: none;
+    
+}
+
+
+#btnSkip {
+    font-size: 36px;
+    font-weight: bold;
+    border-style:solid;
+    border-width: 2px 2px 2px 2px;
+    border-color: teal;
+}
+
+
+#txtBoxSongList {
+    font-size: 36px;
+    font-weight: bold;
+    background-color: teal;
+}
