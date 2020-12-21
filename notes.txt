@@ -1,0 +1,12 @@
+Gstreamer install:
+
+http://lifestyletransfer.com/how-to-install-gstreamer-on-ubuntu/
+http://lifestyletransfer.com/how-to-install-gstreamer-python-bindings/
+gst-launch-1.0 playbin uri=file:////home/pi/Music/A1.flac audio-sink=alsasink
+
+import glob
+glob.glob("/Music/C1*")
+
+import mutagen
+
+
