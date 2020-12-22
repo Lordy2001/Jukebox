@@ -182,7 +182,7 @@ class JukeboxMainWindow(Gtk.Window):
     def spinCoverThread(self):
         print("Spinning Cover")
         self.sendCmd(b'#X1\n')
-        time.sleep(10)
+        time.sleep(11)
         print("Done Spinning Cover")
         self.sendCmd(b'#X0\n')
 
